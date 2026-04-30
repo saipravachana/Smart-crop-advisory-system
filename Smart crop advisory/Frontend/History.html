@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>History</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: url("land.jpg") no-repeat center center/cover;
+    }
+
+    .container {
+      width: 450px;
+      margin: 40px auto;
+      padding: 20px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      color: white;
+    }
+
+    .card {
+      margin: 10px 0;
+      padding: 10px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2>📜 History</h2>
+
+  <div id="historyList"></div>
+
+</div>
+
+<script>
+
+// ✅ GET HISTORY
+let history = JSON.parse(localStorage.getItem("history")) || [];
+
+let html = "";
+
+// ✅ IF NO DATA
+if(history.length === 0){
+  html = "<p>No history available</p>";
+}
+else{
+
+  // ✅ SHOW ALL DATA
+  history.slice().reverse().forEach(item => {
+
+    html += `
+      <div class="card">
+         Crop: ${item.crop}<br>
+         Temp: ${item.current_temp}°C<br>
+         Humidity: ${item.current_humidity}%<br>
+         Recommended Temp: ${item.recommended_temp}<br>
+         Recommended Humidity: ${item.recommended_humidity}<br>
+         Duration: ${item.duration}<br>
+         ${item.advice}
+      </div>
+    `;
+  });
+}
+
+document.getElementById("historyList").innerHTML = html;
+
+</script>
+
+</body>
+</html>

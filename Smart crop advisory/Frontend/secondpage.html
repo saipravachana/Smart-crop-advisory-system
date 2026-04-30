@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Farmer Details</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: url("land.jpg") no-repeat center center/cover;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+    }
+
+    .container {
+      position: relative;
+      width: 450px;
+      margin: 40px auto;
+      padding: 25px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+    }
+
+    h2 {
+      color: white;
+      text-align: center;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
+    label {
+      color: white;
+      display: block;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+      border-radius: 8px;
+      border: none;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 12px;
+      background: green;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #map {
+      height: 250px;
+      margin-top: 10px;
+    }
+
+    .profile-icon {
+      position: fixed;
+      top: 15px;
+      right: 20px;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(8px);
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 1000;
+      color: white;
+    }
+
+    .profile-icon:hover {
+      background: rgba(255,255,255,0.4);
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2>Crop Recommendation Details</h2>
+
+  <!-- Soil -->
+  <div class="field">
+    <label>Soil Type</label>
+    <select id="soil">
+      <option value="" disabled selected>Select Soil Type</option>
+      <option value="clay">Clay</option>
+      <option value="sandy">Sandy</option>
+      <option value="loamy">Loamy</option>
+      <option value="black">Black</option>
+      <option value="red">Red</option>
+      <option value="alluvial">Alluvial</option>
+      <option value="laterite">Laterite</option>
+      <option value="saline">Saline</option>
+      <option value="peaty">Peaty</option>
+      <option value="chalky">Chalky</option>
+    </select>
+  </div>
+
+  <!-- Land -->
+  <div class="field">
+    <label>Land Size (acres)</label>
+    <input id="land" placeholder="Enter land size">
+  </div>
+
+  <!-- Season -->
+  <div class="field">
+    <label>Season</label>
+    <select id="season">
+      <option value="" disabled selected>Select Season</option>
+      <option value="kharif">Kharif</option>
+      <option value="rabi">Rabi</option>
+      <option value="zaid">Zaid</option>
+    </select>
+  </div>
+
+  <!-- Experience -->
+  <div class="field">
+    <label>Experience</label>
+    <select id="experience" onchange="toggleCrop()">
+      <option value="" disabled selected>Select Experience</option>
+      <option value="yes">Yes</option>
+      <option value="no">No</option>
+    </select>
+  </div>
+
+  <!-- Crop -->
+  <div class="field" id="cropDiv" style="display:none;">
+    <label>Current Crop</label>
+    <input id="crop" placeholder="Enter crop name">
+  </div>
+
+  <!-- Irrigation -->
+  <div class="field">
+    <label>Irrigation</label>
+    <select id="irrigation">
+      <option value="" disabled selected>Select Irrigation Level</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+  </div>
+
+  <!-- Duration -->
+  <div class="field">
+    <label>Preferred Crop Duration (months)</label>
+    <input id="duration" placeholder="Enter months">
+  </div>
+
+  <!-- Map -->
+  <div class="field">
+    <label>Land Location</label>
+    <input id="search" placeholder="Search village/city">
+    <button onclick="searchLocation()">Search</button>
+    <div id="map"></div>
+  </div>
+
+  <button onclick="submitData()">Submit</button>
+
+  <div class="profile-icon" onclick="goProfile()">👤</div>
+
+</div>
+
+<script>
+
+// MAP
+let selectedLat=null, selectedLon=null;
+var map=L.map('map').setView([20.5937,78.9629],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+let marker;
+
+map.on('click',e=>{
+  selectedLat=e.latlng.lat;
+  selectedLon=e.latlng.lng;
+  if(marker) map.removeLayer(marker);
+  marker=L.marker([selectedLat,selectedLon]).addTo(map);
+});
+
+function searchLocation(){
+  let place=document.getElementById("search").value;
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${place}`)
+  .then(res=>res.json())
+  .then(data=>{
+    if(!data.length) return alert("Location not found");
+    selectedLat=parseFloat(data[0].lat);
+    selectedLon=parseFloat(data[0].lon);
+    map.setView([selectedLat,selectedLon],13);
+    if(marker) map.removeLayer(marker);
+    marker=L.marker([selectedLat,selectedLon]).addTo(map);
+  });
+}
+
+function toggleCrop(){
+  document.getElementById("cropDiv").style.display =
+    document.getElementById("experience").value==="yes"?"block":"none";
+}
+
+function submitData(){
+
+let data = {
+  soil: soil.value,
+  land: land.value,
+  season: season.value,
+  experience: experience.value,
+  crop: crop.value,
+  irrigation: irrigation.value,
+  duration: duration.value,
+  lat: selectedLat,
+  lon: selectedLon
+};
+
+fetch("http://127.0.0.1:8000/predict", {
+  method: "POST",
+  headers: {"Content-Type":"application/json"},
+  body: JSON.stringify(data)
+})
+.then(res => res.json())
+.then(r => {
+
+  let history = JSON.parse(localStorage.getItem("history")) || [];
+  history.push(r);
+
+  localStorage.setItem("history", JSON.stringify(history));
+  localStorage.setItem("result", JSON.stringify(r));
+
+  window.location.href = "result.html";
+})
+.catch(err => {
+  alert("Backend error");
+  console.log(err);
+});
+}
+
+function goProfile(){
+  window.location.href = "profile.html";
+}
+
+</script>
+
+</body>
+</html>
